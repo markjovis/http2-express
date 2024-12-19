@@ -40,6 +40,7 @@ build/Release
 # Dependency directories
 node_modules/
 jspm_packages/
+dist/
 
 # TypeScript v1 declaration files
 typings/
@@ -94,3 +95,6 @@ progress.txt
 # Ignore everything inside folder "_fileStore" except file "donotdelete.txt".
 _fileStore/*
 !donotdelete.txt
+
+# Excluded src files.
+src/initHttp2ExpressOLD_ORIG.js

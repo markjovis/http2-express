@@ -6,7 +6,7 @@ const initHttp2Express = (app) => (req, res, next) => {
   res.req = req;
   req.next = next;
 
-  const alpnProtocol = req.httpVersion === '2.0' ? req.stream.session.alpnProtocol : "h1";
+  const alpnProtocol = req.httpVersion === '2.0' ? req.stream.session.alpnProtocol : 'h1';
 
   if (alpnProtocol && (alpnProtocol === 'h2' || alpnProtocol === 'h2c')) {
     Object.setPrototypeOf(req, app.http2Request);
