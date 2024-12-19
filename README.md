@@ -1,7 +1,9 @@
 # http2-express
 This package adds HTTP/2 support to express.js applications.
 
-**NOTICE**: This package is fully compatible with the old [http2-express-bridge](https://www.npmjs.com/package/http2-express-bridge). You should be able to replace the old package [http2-express-bridge](https://www.npmjs.com/package/http2-express-bridge) with this new one ("**http2-express**") without changing anything in your code, except the package name in the import (see usage below). 
+**NOTICE**: This package is fully compatible with the old [http2-express-bridge](https://www.npmjs.com/package/http2-express-bridge). You should be able to replace the old package [http2-express-bridge](https://www.npmjs.com/package/http2-express-bridge) with this new one ("**http2-express**") without changing anything in your code, except the package name in the import (see usage below).
+
+**Version 1.0.1** fixes an issue with h2c (running HTTP/2 without TLS) as reported by rickardkarlsson. You should now be able to create a non https server (http2.createServer.....) without any issues.
 
 ## Installation
 ```bash
