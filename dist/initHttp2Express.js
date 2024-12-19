@@ -8,9 +8,9 @@ var initHttp2Express = function initHttp2Express(app) {
     req.res = res;
     res.req = req;
     req.next = next;
-    var _ref = req.httpVersion === '2.0' ? req.stream.session : req,
-      socket = _ref.socket;
-    if (socket.alpnProtocol && (socket.alpnProtocol === 'h2' || socket.alpnProtocol === 'h2c')) {
+    const alpnProtocol = req.httpVersion === '2.0' ? req.stream.session.alpnProtocol : "h1";
+
+    if (alpnProtocol && (alpnProtocol === 'h2' || alpnProtocol === 'h2c')) {
       Object.setPrototypeOf(req, app.http2Request);
       Object.setPrototypeOf(res, app.http2Response);
     } else {
