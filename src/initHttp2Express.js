@@ -1,14 +1,12 @@
+const { isHttp2Request, setPoweredBy } = require("./util");
+
 const initHttp2Express = (app) => (req, res, next) => {
-  if (app.enabled('x-powered-by')) {
-    res.setHeader('X-Powered-By', 'HTTP/2 Express (http2-express)');
-  }
+  setPoweredBy(app, res);
   req.res = res;
   res.req = req;
   req.next = next;
 
-  const alpnProtocol = req.httpVersion === '2.0' ? req.stream.session.alpnProtocol : 'h1';
-
-  if (alpnProtocol && (alpnProtocol === 'h2' || alpnProtocol === 'h2c')) {
+  if (isHttp2Request(req)) {
     Object.setPrototypeOf(req, app.http2Request);
     Object.setPrototypeOf(res, app.http2Response);
   } else {
