@@ -1,7 +1,7 @@
 {
   "name": "http2-express",
   "description": "HTTP/2 support for Express",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "author": "Mark Jovis",
   "contributors": [
     "Mark Jovis <mark.jovis@hotmail.com>"
