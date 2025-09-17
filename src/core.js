@@ -5,6 +5,7 @@ const EventEmitter = require('events');
 const createHttp2Request = require('./http2Request');
 const createHttp2Response = require('./http2Response');
 const initHttp2Express = require('./initHttp2Express');
+const { setPoweredBy, isHttp2Request } = require('./util');
 
 const createHttp2Express = (express) => {
   const {
@@ -15,18 +16,41 @@ const createHttp2Express = (express) => {
     query
   } = express;
 
-  application.lazyrouter = function lazyrouter() {
-    if (!this._router) {
-      this._router = new Router({
-        caseSensitive: this.enabled('case sensitive routing'),
-        strict: this.enabled('strict routing')
+  const isExpress5 = !application.lazyrouter;
+
+  if (isExpress5) {
+    const originalInit = application.init;
+    application.init = function init() {
+      originalInit.call(this);
+      // at this point we can use the router
+      this.router.use((req, res, next) => {
+        setPoweredBy(this, res);
+        next();
       });
-      this._router.use(query(this.get('query parser fn')));
-      this._router.use(initHttp2Express(this));
     }
-  };
+  } else {
+    application.lazyrouter = function lazyrouter() {
+      if (!this._router) {
+        this._router = new Router({
+          caseSensitive: this.enabled('case sensitive routing'),
+          strict: this.enabled('strict routing')
+        });
+        this._router.use(query(this.get('query parser fn')));
+        this._router.use(initHttp2Express(this));
+      }
+    };
+  }
+
+  let oneshotRequestOverride = null;
+  let oneshotResponseOverride = null;
 
   const app = function (req, res, next) {
+    if (isExpress5 && isHttp2Request(req)) {
+      // In Express 5, setting the prototype of req/res is done synchronously in the app.handle function,
+      // so this is the right place to change the value of app.request/app.response.
+      oneshotRequestOverride = app.http2Request;
+      oneshotResponseOverride = app.http2Response;
+    }
     app.handle(req, res, next);
   };
 
@@ -64,8 +88,7 @@ const createHttp2Express = (express) => {
 
   response.push = () => {};
 
-  // Expose the prototype that will get set on requests.
-  app.request = Object.create(request, {
+  app._request = Object.create(request, {
     app: {
       configurable: true,
       enumerable: true,
@@ -74,8 +97,7 @@ const createHttp2Express = (express) => {
     }
   });
 
-  // Expose the prototype that will get set on responses.
-  app.response = Object.create(response, {
+  app._response = Object.create(response, {
     app: {
       configurable: true,
       enumerable: true,
@@ -104,6 +126,41 @@ const createHttp2Express = (express) => {
       value: app
     }
   });
+
+  // Expose the prototype that will get set on requests.
+  Object.defineProperty(app, 'request', {
+    configurable: true,
+    enumerable: true,
+    get() {
+      if (oneshotRequestOverride) {
+        const req = oneshotRequestOverride;
+        oneshotRequestOverride = null;
+        return req;
+      }
+      return app._request;
+    },
+    set: (val) => {
+      app._request = val;
+    }
+  });
+
+  // Expose the prototype that will get set on responses.
+  Object.defineProperty(app, 'response', {
+    configurable: true,
+    enumerable: true,
+    get() {
+      if (oneshotResponseOverride) {
+        const res = oneshotResponseOverride;
+        oneshotResponseOverride = null;
+        return res;
+      }
+      return app._response;
+    },
+    set: (val) => {
+      app._response = val;
+    }
+  });
+
   app.init();
   return app;
 };
