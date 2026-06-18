@@ -1,4 +1,5 @@
-/* eslint-disable dot-notation */
+'use strict';
+
 const { Http2ServerRequest } = require('http2');
 
 const createHttp2Request = (request) => {
@@ -20,19 +21,10 @@ const createHttp2Request = (request) => {
     }
   });
 
-  const requestHostName = Object.getOwnPropertyDescriptor(http2Request, 'hostname')?.get;
-
-  // Redefine hostname property with custom getter.
-  if (requestHostName) {
-    Object.defineProperty(http2Request, 'hostname', {
-      get() {
-        if (!this.headers['host'] && this.authority) {
-          this.headers['host'] = this.authority;
-        }
-        return requestHostName.call(this);
-      }
-    });
-  }
+  // The hostname getter from Express reads this.headers['host'].
+  // HTTP/2 requests carry the host via the :authority pseudo-header instead,
+  // so initHttp2Express populates headers['host'] from req.authority before
+  // any route handlers run. No getter override needed here.
 
   return http2Request;
 };

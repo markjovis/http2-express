@@ -1,12 +1,27 @@
 # http2-express
 This package adds HTTP/2 support to express.js applications.
 
+**Version 1.1.1** Fixes the following bugs:
+1. Fixed the crash issue when a stream is already destroyed.
+2. Removed the side-effecting hostname getter that mutated this.headers['host']. The host header is now initialized once, upfront, in middleware.
+3. Wrapped Object.setPrototypeOf calls in try/catch so errors go to next(err) instead of hanging the request.
+4. Express5 detection now uses parseInt(express.version, 10) >= 5 with the old heuristic as fallback. No longer breaks if lazyrouter is monkey-patched.
+5. Removed response.push = () => {} which mutated the shared Express prototype; push no-ops are now set only on app._response and app.http2Response.
+6. Added headers['host'] initialization in the Express 5 router middleware.
+7. If Express is not installed in your project, or your installed Express version is below version 4.0.0, you'll get a warning.
+<br>
+<br>
+
 **Version 1.1.0** adds support for **EXPRESS 5**. [grainrigi](https://github.com/grainrigi) was able to make the changes necessary to support **EXPRESS 5**.
 This version is also backward compatible with Express 4.
-
-**NOTICE**: This package is fully compatible with the old [http2-express-bridge](https://www.npmjs.com/package/http2-express-bridge). You should be able to replace the old package [http2-express-bridge](https://www.npmjs.com/package/http2-express-bridge) with this new one ("**http2-express**") without changing anything in your code, except the package name in the import (see usage below).
+<br>
+<br>
 
 **Version 1.0.1** fixes an issue with h2c (running HTTP/2 without TLS) as reported by rickardkarlsson. You should now be able to create a non https server (http2.createServer.....) without any issues.
+<br>
+<br>
+
+**NOTICE**: This package is fully compatible with the old [http2-express-bridge](https://www.npmjs.com/package/http2-express-bridge). You should be able to replace the old package [http2-express-bridge](https://www.npmjs.com/package/http2-express-bridge) with this new one ("**http2-express**") without changing anything in your code, except the package name in the import (see usage below).
 
 ## Installation
 ```bash
