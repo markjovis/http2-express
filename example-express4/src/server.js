@@ -2,7 +2,7 @@ const express = require('express');
 const http2 = require('http2');
 const fs = require('fs');
 
-const http2Express = require('../../dist');
+const http2Express = require('../../src');
 
 const app = http2Express(express);
 

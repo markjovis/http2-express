@@ -1,10 +1,10 @@
-/* eslint-disable func-names */
-/* eslint-disable no-underscore-dangle */
+'use strict';
+
 const EventEmitter = require('events');
 
-const createHttp2Request = require('./http2Request');
-const createHttp2Response = require('./http2Response');
-const initHttp2Express = require('./initHttp2Express');
+const createHttp2Request = require('./http2-request');
+const createHttp2Response = require('./http2-response');
+const initHttp2Express = require('./init-http2-express');
 const { setPoweredBy, isHttp2Request } = require('./util');
 
 const createHttp2Express = (express) => {
@@ -16,18 +16,28 @@ const createHttp2Express = (express) => {
     query
   } = express;
 
-  const isExpress5 = !application.lazyrouter;
+  // Detect Express 5 via the version string (positive-space check) with a
+  // fallback to the absence-of-lazyrouter heuristic for edge cases where
+  // express.version is unavailable.
+  const isExpress5 = express.version
+    ? parseInt(express.version, 10) >= 5
+    : typeof application.lazyrouter !== 'function';
 
   if (isExpress5) {
     const originalInit = application.init;
     application.init = function init() {
       originalInit.call(this);
-      // at this point we can use the router
       this.router.use((req, res, next) => {
         setPoweredBy(this, res);
+        // HTTP/2 carries the host in :authority. Populate headers['host'] once,
+        // upfront, so Express's req.hostname getter and any header-inspection
+        // middleware see a consistent value from the start.
+        if (isHttp2Request(req) && !req.headers['host'] && req.authority) {
+          req.headers['host'] = req.authority;
+        }
         next();
       });
-    }
+    };
   } else {
     application.lazyrouter = function lazyrouter() {
       if (!this._router) {
@@ -41,13 +51,20 @@ const createHttp2Express = (express) => {
     };
   }
 
+  // For Express 5: intercept the app.request/app.response reads that happen
+  // synchronously at the top of app.handle, so H2 connections get the HTTP/2
+  // prototype set immediately — before any stream machinery can run _read().
+  // This must happen at the getter level, not in a middleware, because by the
+  // time middleware runs the wrong prototype is already set on the request.
+  //
+  // Safe under Node.js's single-threaded event loop: the overrides are set and
+  // consumed within the same synchronous call stack (no await between them and
+  // Express 5's prototype reads inside app.handle).
   let oneshotRequestOverride = null;
   let oneshotResponseOverride = null;
 
   const app = function (req, res, next) {
     if (isExpress5 && isHttp2Request(req)) {
-      // In Express 5, setting the prototype of req/res is done synchronously in the app.handle function,
-      // so this is the right place to change the value of app.request/app.response.
       oneshotRequestOverride = app.http2Request;
       oneshotResponseOverride = app.http2Response;
     }
@@ -86,8 +103,6 @@ const createHttp2Express = (express) => {
     }
   });
 
-  response.push = () => {};
-
   app._request = Object.create(request, {
     app: {
       configurable: true,
@@ -105,6 +120,9 @@ const createHttp2Express = (express) => {
       value: app
     }
   });
+
+  // No-op push on the per-app HTTP/1 response object only.
+  app._response.push = () => { };
 
   const http2Request = createHttp2Request(request);
   const http2Response = createHttp2Response(response);
@@ -127,38 +145,35 @@ const createHttp2Express = (express) => {
     }
   });
 
-  // Expose the prototype that will get set on requests.
+  // No-op push on the per-app HTTP/2 response object only.
+  app.http2Response.push = () => { };
+
   Object.defineProperty(app, 'request', {
     configurable: true,
     enumerable: true,
     get() {
       if (oneshotRequestOverride) {
-        const req = oneshotRequestOverride;
+        const val = oneshotRequestOverride;
         oneshotRequestOverride = null;
-        return req;
+        return val;
       }
       return app._request;
     },
-    set: (val) => {
-      app._request = val;
-    }
+    set(val) { app._request = val; }
   });
 
-  // Expose the prototype that will get set on responses.
   Object.defineProperty(app, 'response', {
     configurable: true,
     enumerable: true,
     get() {
       if (oneshotResponseOverride) {
-        const res = oneshotResponseOverride;
+        const val = oneshotResponseOverride;
         oneshotResponseOverride = null;
-        return res;
+        return val;
       }
       return app._response;
     },
-    set: (val) => {
-      app._response = val;
-    }
+    set(val) { app._response = val; }
   });
 
   app.init();

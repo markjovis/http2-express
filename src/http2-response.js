@@ -1,3 +1,5 @@
+'use strict';
+
 const { Http2ServerResponse } = require('http2');
 
 const createHttp2Response = (response) => {
