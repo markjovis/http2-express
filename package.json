@@ -3,7 +3,7 @@
   "type": "commonjs",
   "sideEffects": false,
   "description": "HTTP/2 support for Express",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "author": "Mark Jovis",
   "contributors": [
     "grainrigi"
@@ -20,17 +20,24 @@
     "server"
   ],
   "main": "src/index.js",
-  "files": ["src/"],
+  "types": "src/index.d.ts",
+  "files": [
+    "src/"
+  ],
   "scripts": {
-    "createTypeFiles": "npx -p typescript tsc src/*.js --declaration --allowJs --emitDeclarationOnly --outDir types"
+    "typecheck": "tsc -p tsconfig.json"
   },
-    "peerDependencies": {
+  "peerDependencies": {
     "express": ">=4.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@types/express": "^5.0.6",
+    "@types/node": "^20.19.43",
     "eslint": "^10.5.0",
-    "globals": "^17.6.0"
+    "express": "^5.3.0",
+    "globals": "^17.6.0",
+    "typescript": "^7.0.2"
   },
   "engines": {
     "node": ">= 20.0.0"

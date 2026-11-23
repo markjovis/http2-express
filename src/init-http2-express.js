@@ -2,6 +2,12 @@
 
 const { isHttp2Request, setPoweredBy } = require('./util');
 
+/**
+ * Creates the Express middleware that swaps the request/response prototypes to
+ * the HTTP/2 or HTTP/1 variants.
+ * @param {any} app The HTTP/2-enabled Express application.
+ * @returns {(req: any, res: any, next: (err?: unknown) => void) => void}
+ */
 const initHttp2Express = (app) => (req, res, next) => {
   setPoweredBy(app, res);
   req.res = res;
