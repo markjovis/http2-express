@@ -41,4 +41,15 @@ export default [
       'max-len': ['error', 250, 4, { ignoreUrls: true }],
     },
   },
+  {
+    // The ESM example projects ("type": "module") use import/export and
+    // import.meta, so they must be parsed as ES modules, not CommonJS.
+    files: ['example-*-esm/**/*.js'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
 ];

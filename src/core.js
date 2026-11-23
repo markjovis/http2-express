@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use strict';
 
 const EventEmitter = require('events');
@@ -7,6 +8,12 @@ const createHttp2Response = require('./http2-response');
 const initHttp2Express = require('./init-http2-express');
 const { setPoweredBy, isHttp2Request } = require('./util');
 
+/**
+ * Creates an Express application (v4 or v5) with HTTP/2 support.
+ * The public, strongly typed signature lives in `index.d.ts`.
+ * @param {Record<string, any>} express The `express` module.
+ * @returns {any} The HTTP/2-enabled Express application.
+ */
 const createHttp2Express = (express) => {
   const {
     application,
@@ -27,7 +34,7 @@ const createHttp2Express = (express) => {
     const originalInit = application.init;
     application.init = function init() {
       originalInit.call(this);
-      this.router.use((req, res, next) => {
+      this.router.use((/** @type {any} */ req, /** @type {any} */ res, /** @type {() => void} */ next) => {
         setPoweredBy(this, res);
         // HTTP/2 carries the host in :authority. Populate headers['host'] once,
         // upfront, so Express's req.hostname getter and any header-inspection
@@ -60,9 +67,19 @@ const createHttp2Express = (express) => {
   // Safe under Node.js's single-threaded event loop: the overrides are set and
   // consumed within the same synchronous call stack (no await between them and
   // Express 5's prototype reads inside app.handle).
+  /** @type {any} */
   let oneshotRequestOverride = null;
+  /** @type {any} */
   let oneshotResponseOverride = null;
 
+  /**
+   * The request listener returned to the caller. Typed as `any` because it is
+   * built dynamically by copying Express's application members onto it.
+   * @param {any} req
+   * @param {any} res
+   * @param {(err?: unknown) => void} [next]
+   * @type {any}
+   */
   const app = function (req, res, next) {
     if (isExpress5 && isHttp2Request(req)) {
       oneshotRequestOverride = app.http2Request;

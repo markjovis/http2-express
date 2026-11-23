@@ -1,5 +1,5 @@
 {
-  "name": "example-http2-express-with-express4",
+  "name": "example-http2-express-with-express5-ts",
   "description": "HTTP/2 support for Express",
   "version": "1.0.0",
   "author": "Mark Jovis",
@@ -17,13 +17,14 @@
     "api",
     "server"
   ],
-  "main": "src/server.js", 
+  "main": "src/server.ts",
   "scripts": {
-    "start": "NODE_ENV=localdev nodemon src/server.js -e js,json",
+    "start": "NODE_ENV=localdev tsx watch src/server.ts",
+    "typecheck": "tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "express": "^4.22.2"  
+    "express": "^5.2.1"
   },
   "engines": {
     "node": ">= 20.0.0"
@@ -35,5 +36,11 @@
   "bugs": {
     "url": "https://github.com/markjovis/http2-express/issues"
   },
-  "homepage": "https://github.com/markjovis/http2-express#readme"
+  "homepage": "https://github.com/markjovis/http2-express#readme",
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.6",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
 }

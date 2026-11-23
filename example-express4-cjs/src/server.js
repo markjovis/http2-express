@@ -1,3 +1,4 @@
+// @ts-check
 const express = require('express');
 const http2 = require('http2');
 const fs = require('fs');

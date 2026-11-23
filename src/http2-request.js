@@ -2,7 +2,13 @@
 
 const { Http2ServerRequest } = require('http2');
 
+/**
+ * Builds an HTTP/2 flavoured copy of Express's `request` prototype.
+ * @param {object} request Express's `request` prototype object.
+ * @returns {import('http2').Http2ServerRequest} The HTTP/2 request prototype.
+ */
 const createHttp2Request = (request) => {
+  /** @type {any} */
   const http2Request = Object.create(Http2ServerRequest.prototype);
 
   // Copying properties and descriptors from request to http2Request.
